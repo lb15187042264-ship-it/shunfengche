@@ -1,1 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>简易顺风车预约平台</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{max-width:1000px;margin:20px auto;padding:0 20px;font-family:system-ui}
+    .box{border:1px solid #eee;padding:16px;border-radius:8px;margin:15px 0}
+    input,select,button{padding:8px 12px;margin:5px;width:220px}
+    button{background:#0071e3;color:white;border:none;cursor:pointer}
+    .item{padding:10px;border-bottom:1px #eee solid}
+  </style>
+</head>
+<body>
+<h2>顺风车发布 & 预约系统</h2>
 
+<div class="box">
+  <h3>车主发布行程</h3>
+  <div>
+    <input id="start" placeholder="出发地">
+    <input id="end" placeholder="目的地">
+    <input id="time" placeholder="出发时间 例：2026-06-02 08:00">
+    <input id="seat" placeholder="剩余座位">
+    <input id="price" placeholder="单价(元)">
+    <button onclick="publishTrip()">发布行程</button>
+  </div>
+</div>
+
+<div class="box">
+  <h3>可预约行程列表</h3>
+  <div id="tripList"></div>
+</div>
+
+<script>
+async function getTrips(){
+  const res = await fetch('/api/trips');
+  const list = await res.json();
+  const wrap = document.getElementById('tripList');
+  wrap.innerHTML = '';
+  list.forEach(trip=>{
+    wrap.innerHTML += `
+      <div class="item">
+        ${trip.start} → ${trip.end} | ${trip.time}
+        剩余座位:${trip.seat} | 单价:${trip.price}元
+        <button onclick="book('${trip.id}')">立即预约</button>
+      </div>
+    `
+  })
+}
+
+async function publishTrip(){
+  const data = {
+    start:document.getElementById('start').value,
+    end:document.getElementById('end').value,
+    time:document.getElementById('time').value,
+    seat:document.getElementById('seat').value,
+    price:document.getElementById('price').value
+  }
+  await fetch('/api/trips',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  })
+  getTrips()
+  alert('行程发布成功')
+}
+
+async function book(tripId){
+  await fetch('/api/orders',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tripId})
+  })
+  alert('预约下单成功，座位已扣除')
+  getTrips()
+}
+
+window.onload = getTrips
+</script>
+</body>
+</html>
